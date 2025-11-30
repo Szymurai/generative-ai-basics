@@ -46,8 +46,8 @@ tools = [
 ]
 
 def get_current_date():
-    # The strftime() method of the datetime module in Python is used to format a datetime object into a string representation. 
-    # To use the strftime() method to convert a datetime object to a JSON serializable string
+    # Metoda strftime() z modułu datetime w Pythonie służy do formatowania obiektu datetime na postać tekstową.
+    # Aby przekonwertować obiekt datetime na string możliwy do zapisania w formacie JSON, możesz skorzystać z metody strftime() w przedstawiony poniżej sposób:
     return f'Dzisiejsza data: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}.'
 
 def get_motivational_quote(author):
@@ -61,12 +61,12 @@ def get_motivational_quote(author):
 		    
     return ''
 
-# Create a running input list we will add to over time
+# Deklaracja listy wiadomości przekazywanych do modelu:
 input_list = [
     {"role": "user", "content": "W jaki sposób byś mnie zmotywował? Potrzebuję motywacji od Arnolda Schwarzeneggera. Podaj dzisiejszą datę i godzinę."}
 ]
 
-# 2. Prompt the model with tools defined
+# 2. Pierwsze zapytanie do modelu — wraz z definicją funkcji w JSON Schema:
 response = client.responses.create(
     model=model_name,
     tools=tools,
@@ -74,20 +74,24 @@ response = client.responses.create(
 )
 
 print(20*'---')
+print(response.model_dump_json(indent=2))
+print(20*'---')
+
+print(20*'---')
 print(response.output)
 print(20*'---')
 
-# Save function call outputs for subsequent requests
+# Dynamicznie dodawanie nowych wiadomości:
 input_list += response.output
 
 for item in response.output:
     if item.type == "function_call":
         match item.name:
             case 'get_motivational_quote':
-                # 3. Execute the function logic for get_motivational_quote
+                # 3. Wywołujemy funkcję:
                 motivational_quote = get_motivational_quote(json.loads(item.arguments))
 
-                # 4. Provide function call results to the model
+                # 4. Przekazujemy wynik wywołania funkcji:
                 input_list.append({
                     "type": "function_call_output",
                     "call_id": item.call_id,
@@ -116,7 +120,7 @@ response = client.responses.create(
     input=input_list,
 )
 
-# 5. The model should be able to give a response!
+# 5. W tym momencie powinniśmy otrzymać ostateczną odpowiedź od modelu:
 print("\nFinal output:")
 print(response.model_dump_json(indent=2))
 print("\n" + response.output_text)
